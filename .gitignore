@@ -1,0 +1,5 @@
+bin
+*.run
+*.gguf
+llama.cpp
+.env
