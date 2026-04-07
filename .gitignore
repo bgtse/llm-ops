@@ -3,3 +3,4 @@ bin
 *.gguf
 llama.cpp
 .env
+*.deb*
