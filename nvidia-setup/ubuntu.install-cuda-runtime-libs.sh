@@ -1,3 +1,5 @@
+# Work upto Blackwell generation GPUs
+
 #!/usr/bin/env bash
 set -eu
 set -o pipefail || true
