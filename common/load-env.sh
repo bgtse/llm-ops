@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/.env"
+# Resolve the caller script directory (the script that sourced this file)
+CALLER_SOURCE="${BASH_SOURCE[1]}"
+CALLER_DIR="$(cd "$(dirname "${CALLER_SOURCE}")" && pwd -P)"
+
+ENV_FILE="${CALLER_DIR}/.env"
+
 if [ -f "${ENV_FILE}" ]; then
   set -a
   source "${ENV_FILE}"
