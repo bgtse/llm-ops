@@ -7,6 +7,8 @@ source "${SCRIPT_DIR}/../common/load-env.sh"
 REPO_URL="https://github.com/ggerganov/llama.cpp.git"
 SRC_DIR="${SCRIPT_DIR}/llama.cpp"
 BUILD_DIR="${SRC_DIR}/build"
+ENV_FILE="${SCRIPT_DIR}/.env"
+ENV_KEY="BIN_NAME"
 
 REQUIRED_CMDS=(git cmake make gcc g++ nproc)
 
@@ -92,7 +94,8 @@ case "${ARCH_RAW}" in
   *) ARCH="${ARCH_RAW}" ;;
 esac
 
-OUT_DIR="${BIN_DIR}/llama-${COMMIT_ID}-bin-linux-cuda-${ARCH}"
+BUILD_NAME="llama-${COMMIT_ID}-bin-linux-cuda-${ARCH}"
+OUT_DIR="${BIN_DIR}/${BUILD_NAME}"
 
 rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}"
@@ -101,4 +104,14 @@ for bin in llama-cli llama-server llama-quantize llama-bench; do
   [ -f "${BUILD_DIR}/bin/${bin}" ] && cp "${BUILD_DIR}/bin/${bin}" "${OUT_DIR}/"
 done
 
+# ---- update .env ----
+touch "${ENV_FILE}"
+
+if grep -q "^${ENV_KEY}=" "${ENV_FILE}"; then
+  sed -i "s|^${ENV_KEY}=.*|${ENV_KEY}=${BUILD_NAME}|" "${ENV_FILE}"
+else
+  echo "${ENV_KEY}=${BUILD_NAME}" >> "${ENV_FILE}"
+fi
+
 echo "Done. Binaries at: ${OUT_DIR}"
+echo "Updated ${ENV_KEY}=${BUILD_NAME} in ${ENV_FILE}"
