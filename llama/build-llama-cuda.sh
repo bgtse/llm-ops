@@ -38,7 +38,7 @@ sudo apt-get remove --purge -y nvidia-cuda-toolkit || true
 sudo rm -rf /usr/include/cuda* || true
 
 # ---- install NVIDIA CUDA if missing ----
-if [ ! -x "/usr/local/cuda/bin/nvcc" ]; then
+if ! find /usr/local -maxdepth 1 -type d -name 'cuda-*' | grep -q .; then
   sudo apt-get update
   sudo apt-get install -y wget gnupg
 
@@ -49,8 +49,15 @@ if [ ! -x "/usr/local/cuda/bin/nvcc" ]; then
   sudo apt-get install -y cuda-toolkit
 fi
 
-# ---- FORCE CUDA paths ----
-export CUDA_HOME="/usr/local/cuda"
+# ---- detect CUDA dynamically ----
+CUDA_HOME="$(find /usr/local -maxdepth 1 -type d -name 'cuda-*' | sort -V | tail -n1)"
+
+if [ -z "${CUDA_HOME}" ]; then
+  echo "No CUDA installation found under /usr/local" >&2
+  exit 1
+fi
+
+export CUDA_HOME
 export PATH="${CUDA_HOME}/bin:${PATH}"
 export LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH:-}"
 
@@ -65,6 +72,8 @@ if [ ! -x "${CUDA_HOME}/bin/nvcc" ]; then
   exit 1
 fi
 
+echo "Using CUDA at: ${CUDA_HOME}"
+
 # ---- clone/update ----
 if [ ! -d "${SRC_DIR}/.git" ]; then
   git clone "${REPO_URL}" "${SRC_DIR}"
@@ -72,7 +81,7 @@ else
   git -C "${SRC_DIR}" pull --ff-only
 fi
 
-# ---- CLEAN BUILD DIR (important) ----
+# ---- CLEAN BUILD DIR ----
 rm -rf "${BUILD_DIR}"
 
 # ---- build ----
