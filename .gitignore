@@ -2,5 +2,6 @@ bin
 *.run
 *.gguf
 llama.cpp
-.env
+.env*
+!.env.example
 *.deb*

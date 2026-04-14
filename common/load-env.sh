@@ -5,7 +5,11 @@ set -euo pipefail
 CALLER_SOURCE="${BASH_SOURCE[1]}"
 CALLER_DIR="$(cd "$(dirname "${CALLER_SOURCE}")" && pwd -P)"
 
-ENV_FILE="${CALLER_DIR}/.env"
+if [ -n "${1:-}" ]; then
+  ENV_FILE="${CALLER_DIR}/$1"
+else
+  ENV_FILE="${CALLER_DIR}/.env"
+fi
 
 if [ -f "${ENV_FILE}" ]; then
   set -a
