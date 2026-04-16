@@ -4,4 +4,6 @@ bin
 llama.cpp
 .env*
 !.env.example
+!.env.build-llama-cuda.example
+!.env.server.example
 *.deb*

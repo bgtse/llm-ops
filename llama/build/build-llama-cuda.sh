@@ -2,12 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-source "${SCRIPT_DIR}/../common/load-env.sh"
+source "${SCRIPT_DIR}/../../common/load-env.sh"
 
 REPO_URL="https://github.com/ggerganov/llama.cpp.git"
 SRC_DIR="${SCRIPT_DIR}/llama.cpp"
 BUILD_DIR="${SRC_DIR}/build"
-ENV_FILE="${SCRIPT_DIR}/.env"
 ENV_KEY="BIN_NAME"
 
 REQUIRED_CMDS=(git cmake make gcc g++ nproc)
@@ -113,14 +112,27 @@ for bin in llama-cli llama-server llama-quantize llama-bench; do
   [ -f "${BUILD_DIR}/bin/${bin}" ] && cp "${BUILD_DIR}/bin/${bin}" "${OUT_DIR}/"
 done
 
-# ---- update .env ----
-touch "${ENV_FILE}"
+# ---- update .env files in ../run directory ----
+# Find all .env files in ../run directory (excluding .example files) and update them
+for env_file in ../run/.env*; do
+  # Skip if no files match the pattern
+  [ -f "$env_file" ] || continue
 
-if grep -q "^${ENV_KEY}=" "${ENV_FILE}"; then
-  sed -i "s|^${ENV_KEY}=.*|${ENV_KEY}=${BUILD_NAME}|" "${ENV_FILE}"
-else
-  echo "${ENV_KEY}=${BUILD_NAME}" >> "${ENV_FILE}"
-fi
+  # Skip files with .example in the name
+  if [[ "$env_file" == *".example"* ]]; then
+    continue
+  fi
+
+  # Update the BIN_NAME variable in the env file
+  touch "$env_file"
+
+  if grep -q "^${ENV_KEY}=" "$env_file"; then
+    sed -i "s|^${ENV_KEY}=.*|${ENV_KEY}=${BUILD_NAME}|" "$env_file"
+  else
+    echo "${ENV_KEY}=${BUILD_NAME}" >> "$env_file"
+  fi
+
+  echo "Updated ${ENV_KEY}=${BUILD_NAME} in ${env_file}"
+done
 
 echo "Done. Binaries at: ${OUT_DIR}"
-echo "Updated ${ENV_KEY}=${BUILD_NAME} in ${ENV_FILE}"

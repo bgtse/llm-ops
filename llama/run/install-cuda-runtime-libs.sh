@@ -5,7 +5,7 @@ set -eu
 set -o pipefail || true
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-source "${SCRIPT_DIR}/../common/load-env.sh"
+source "${SCRIPT_DIR}/../../common/load-env.sh"
 
 echo "[1/5] Update"
 apt-get update

@@ -2,7 +2,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 if [ -n "${1:-}" ]; then
-  source "${SCRIPT_DIR}/../common/load-env.sh" "${1:-}"
+  source "${SCRIPT_DIR}/../../common/load-env.sh" "${1:-}"
 else
   echo "Usage: $0 <.env.name>"
   exit 1
@@ -15,7 +15,7 @@ fi
 
 cat <<EOF > /etc/systemd/system/llama-server-${LLAMA_ARG_PORT}.service
 [Unit]
-Description=Llama server at ${LLAMA_ARG_PORT}
+Description=Llama server at ${LLAMA_ARG_PORT}. .env file is ${1:-}
 After=systemd-modules-load.service
 Requires=systemd-modules-load.service
 

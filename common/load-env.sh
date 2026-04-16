@@ -15,4 +15,7 @@ if [ -f "${ENV_FILE}" ]; then
   set -a
   source "${ENV_FILE}"
   set +a
+else
+  echo "Missing ${ENV_FILE}"
+  exit 1
 fi
