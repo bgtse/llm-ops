@@ -61,10 +61,14 @@ Run llama mannually
 ```sh
 ./llama/run/server.sh # will load .env
 ./llama/run/server.sh .env.as-you-prefer # will load .env.as-you-prefer
+./llama/run/server.sh .env.as-you-prefer --with-more option --and-more option # will load .env.as-you-prefer + direct options
 ```
 
-Run llama as a service. For each .env* file used for service, `LLAMA_ARG_PORT` must be unique.
+## 6. Run as a service
+
+`LLAMA_ARG_PORT` will be used as a part of service name. If you run multiple services, make sure port are unique.
 
 ```sh
-./llama/run/install-llama-server-service.sh .env.as-you-prefer
+./llama/run/install-llama-server-service.sh .env.as-you-prefer # will load .env.as-you-prefer
+./llama/run/install-llama-server-service.sh .env.as-you-prefer --with-more option --and-more option # will load .env.as-you-prefer + direct options
 ```
