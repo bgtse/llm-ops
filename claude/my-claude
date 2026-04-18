@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+set -e
+
+ENV_OVERRIDE=""
+if [ "$1" = "--env" ]; then
+  ENV_OVERRIDE="$2"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+
+if [ -n "$ENV_OVERRIDE" ]; then
+  ENV_FILE="${SCRIPT_DIR}/.env.${ENV_OVERRIDE}"
+else
+  ENV_FILE="${SCRIPT_DIR}/.env"
+fi
+
+if [ ! -f "$ENV_FILE" ]; then
+  exit 1
+fi
+
+set -a
+source "$ENV_FILE"
+set +a
+
+PROXY_PID=""
+
+if [ -n "$MC_PROXY_PORT" ] && [ -n "$ENV_OVERRIDE" ]; then
+  : "${ANTHROPIC_BASE_URL:?}"
+  : "${MC_PROXY_PORT:?}"
+  : "${MC_CF_ID:?}"
+  : "${MC_CF_SECRET:?}"
+
+  node <<EOF &
+const http = require('http');
+const https = require('https');
+
+const HOST = (new URL(process.env.ANTHROPIC_BASE_URL)).hostname;
+const PORT = process.env.MC_PROXY_PORT;
+const CF_ID = process.env.MC_CF_ID;
+const CF_SECRET = process.env.MC_CF_SECRET;
+
+const server = http.createServer((req, res) => {
+  const options = {
+    hostname: HOST,
+    port: 443,
+    path: req.url,
+    method: req.method,
+    servername: HOST,
+    headers: {
+      ...req.headers,
+      host: HOST,
+      'CF-Access-Client-Id': CF_ID,
+      'CF-Access-Client-Secret': CF_SECRET,
+    },
+  };
+
+  const proxy = https.request(options, (r) => {
+    const headers = { ...r.headers };
+    delete headers['transfer-encoding'];
+    res.writeHead(r.statusCode, headers);
+    r.pipe(res);
+  });
+
+  proxy.on('error', () => {
+    if (!res.headersSent) res.writeHead(502);
+    res.end('Bad gateway');
+  });
+
+  req.pipe(proxy);
+});
+
+server.listen(PORT);
+EOF
+
+  PROXY_PID=$!
+
+  cleanup() {
+    kill $PROXY_PID 2>/dev/null || true
+  }
+  trap cleanup EXIT INT TERM
+
+  sleep 1
+
+  export ANTHROPIC_BASE_URL="http://127.0.0.1:${MC_PROXY_PORT}"
+else
+  : "${ANTHROPIC_BASE_URL:?}"
+fi
+
+export ANTHROPIC_MODEL=$(
+  curl -s "$ANTHROPIC_BASE_URL/v1/models" \
+  | jq -r '.models[0].name'
+)
+
+claude
