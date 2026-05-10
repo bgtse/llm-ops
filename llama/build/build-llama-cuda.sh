@@ -2,12 +2,31 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-source "${SCRIPT_DIR}/../../common/load-env.sh"
+source "${SCRIPT_DIR}/../../common/load-env.sh" ".env"
 
-REPO_URL="https://github.com/ggerganov/llama.cpp.git"
+REPO_URL="https://github.com/ggml-org/llama.cpp.git"
 SRC_DIR="${SCRIPT_DIR}/llama.cpp"
 BUILD_DIR="${SRC_DIR}/build"
 ENV_KEY="BIN_NAME"
+show_usage() {
+  echo "Usage: $0 <commit|tag|branch>"
+  echo ""
+  echo "Arguments:"
+  echo "  commit|tag|branch  Git ref to checkout (required)"
+  echo ""
+  echo "Examples:"
+  echo "  $0 b9095        Build from commit/tag b9095"
+  echo "  $0 v3100        Build from tag v3100"
+  echo "  $0 master       Build from master branch"
+}
+
+# ---- handle arguments ----
+if [ $# -lt 1 ]; then
+  show_usage
+  exit 1
+fi
+
+GIT_REF="$1"
 
 REQUIRED_CMDS=(git cmake make gcc g++ nproc)
 
@@ -76,9 +95,10 @@ echo "Using CUDA at: ${CUDA_HOME}"
 # ---- clone/update ----
 if [ ! -d "${SRC_DIR}/.git" ]; then
   git clone "${REPO_URL}" "${SRC_DIR}"
-else
-  git -C "${SRC_DIR}" pull --ff-only
 fi
+
+git -C "${SRC_DIR}" fetch origin --tags --depth 1 2>/dev/null || true
+git -C "${SRC_DIR}" checkout "${GIT_REF}"
 
 # ---- CLEAN BUILD DIR ----
 rm -rf "${BUILD_DIR}"
