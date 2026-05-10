@@ -6,4 +6,5 @@ llama.cpp
 !.env.example
 !.env.build-llama-cuda.example
 !.env.server.example
+!.env.bench.example
 *.deb*
