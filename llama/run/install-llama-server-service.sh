@@ -34,3 +34,4 @@ EOF
 
 systemctl daemon-reload
 systemctl enable llama-server-${LLAMA_ARG_PORT}.service
+systemctl start llama-server-${LLAMA_ARG_PORT}.service
